@@ -164,13 +164,8 @@ def get_byt_distribution(df):
     
     return result
 
-def discretize_distribution(df,name):
-    if name == 'pkt':
-        thresholds = get_pkt_distribution(df)
-    elif name == 'byt':    
-        thresholds = get_byt_distribution(df)
-    else:
-        thresholds = get_distribution(df)
+def discretize_distribution(df, name, thresholds):
+    
     names = get_names(name,thresholds.size)
     
     result = np.zeros((df.size,thresholds.size), dtype=int)
@@ -182,24 +177,18 @@ def discretize_distribution(df,name):
     return pd.DataFrame(result,columns = names),{ name: thresholds}   
 
 
-def df_preprocessing(df):
+def df_preprocessing(df, thresholds):
     # Esta función utiliza todas las funciones anteriormente declaradas
     # para preprocesar los datos a utilizar con los modelos de IA
     
     df = df.reset_index()
     
-    td_dist, td_thres = discretize_distribution(df['td'], 'td')
+    td_dist, td_thres = discretize_distribution(df['td'], 'td', thresholds['td'])
     print("td discretized")
-    pkt_dist, pkt_thres = discretize_distribution(df['pkt'], 'pkt')
+    pkt_dist, pkt_thres = discretize_distribution(df['pkt'], 'pkt', thresholds['pkt'])
     print("pkt discretized")
-    byt_dist, byt_thres = discretize_distribution(df['byt'], 'byt')
+    byt_dist, byt_thres = discretize_distribution(df['byt'], 'byt', thresholds['byt'])
     print("byt discretized")
-
-    thresholds = {}
-
-    thresholds.update(td_thres)
-    thresholds.update(pkt_thres)
-    thresholds.update(byt_thres)
 
     return pd.concat([
                      df['te'],
@@ -219,6 +208,8 @@ def df_preprocessing(df):
 
 
 def create_dataframes(df):
+    df = df.drop(['te'], axis=1)
+    df = df.drop(['label'], axis=1)
     df = np.int8(df)
     df = df[:(df.shape[0] - df.shape[0]%75)]
     df = np.reshape(df,(df.shape[0]//75,75,df.shape[1]))
@@ -226,9 +217,7 @@ def create_dataframes(df):
 
 
 def shuffle(df, test_proportion):
-    df = df.drop(['te'], axis=1)
-    df = df.drop(['label'], axis=1)
     ratio = int(df.shape[0]/test_proportion)
     X_train = df[ratio:]
     X_test =  df[:ratio]
-    return create_dataframes(X_train), create_dataframes(X_test) 
+    return X_train, X_test

@@ -120,8 +120,8 @@ class VAE(keras.Model):
             "accuracy": self.accuracy_tracker.result(),
         }
 
-def compile_vae(lr=1e-5):
-    vae = VAE(encoder=vae_encoder(), decoder=vae_decoder())
+def compile_vae(encoder=vae_encoder(), decoder=vae_decoder(), lr=1e-5):
+    vae = VAE(encoder, decoder)
     vae.compile(
         optimizer=keras.optimizers.Adam(learning_rate=lr)
     )
